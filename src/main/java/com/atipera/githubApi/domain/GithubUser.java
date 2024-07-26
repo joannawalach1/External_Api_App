@@ -22,4 +22,7 @@ public class GithubUser {
     private String login;
     @OneToMany(mappedBy = "GithubUser", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<GithubRepository> repositories = new ArrayList<>();
+
+    public <T> GithubUser(String username, String login, List<T> repositories) {
+    }
 }

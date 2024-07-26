@@ -1,12 +1,30 @@
 package com.atipera.githubApi.controller;
 
+
+import com.atipera.githubApi.domain.GithubRepository;
+import com.atipera.githubApi.domain.GithubUser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Arrays;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+@SpringBootTest
+@AutoConfigureMockMvc
 class GithubControllerTest {
+@Autowired
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
@@ -17,10 +35,26 @@ class GithubControllerTest {
     }
 
     @Test
-    void printRepositoryNames() {
+    void printRepositoryNames() throws Exception {
+        GithubRepository repo1 = new GithubRepository("Repo1");
+        GithubRepository repo2 = new GithubRepository("Repo2");
+        GithubUser user = new GithubUser("JoannaWalach1", "JoannaWalach1", Arrays.asList(repo1, repo2));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/github/users/{userLogin}/repos", "JoannaWalach1"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0]").value("algoritms"))
+                .andReturn();
     }
 
     @Test
-    void printBranchesNames() {
+    void printBranchesNames() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/github/repos/{userLogin}/{nameOfRepo}/branches", "JoannaWalach1", "School-App"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0]").value("Branch: main, Last Commit SHA: 79d48f428bf8ae8dea8e726f7947613da43510d6"))
+                .andReturn();
     }
 }

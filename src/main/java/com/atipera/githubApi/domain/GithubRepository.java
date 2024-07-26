@@ -25,4 +25,6 @@ public class GithubRepository {
     private List<GithubBranch> branches = new ArrayList<>();
     private boolean fork;
 
+    public GithubRepository(String name) {
+    }
 }
