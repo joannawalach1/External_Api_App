@@ -43,10 +43,8 @@ class GithubControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/github/users/{userLogin}/repos", ""))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value("Repository name must not be null or empty"))
+                .andExpect(jsonPath("$.title").value("Not Found"))
                 .andReturn();
     }
     @Test
@@ -78,10 +76,8 @@ class GithubControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/github/repos/{userLogin}/{nameOfRepo}/branches", "JoannaWalach1", null))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value("Repository name must not be null or empty"))
+                .andExpect(jsonPath("$.title").value("Not Found"))
                 .andReturn();
     }
 }

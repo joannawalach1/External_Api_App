@@ -57,7 +57,9 @@ public class ControllerAdvisor extends ResponseEntityExceptionHandler {
 
         body.put("errors", errors);
 
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(errors);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
