@@ -2,6 +2,8 @@ package com.atipera.githubApi.service;
 
 import com.atipera.githubApi.domain.GithubBranch;
 import com.atipera.githubApi.domain.GithubRepository;
+import com.atipera.githubApi.exception.GithubRepoNotFound;
+import com.atipera.githubApi.exception.GithubUserNotFound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +33,7 @@ public class GithubService {
         return repositoryNames;
     }
 
-    public List<String> printBranchesNamesByUserAndRepo(String userLogin, String nameOfRepo) {
+    public List<String> printBranchesNamesByUserAndRepo(String userLogin, String nameOfRepo) throws GithubUserNotFound {
         List<String> branchesNames = branchesListByRepoAndUserWithLastSha(userLogin, nameOfRepo);
         branchesNames.forEach(name -> log.info("Branch Name: {}", name));
         return branchesNames;
@@ -54,10 +56,11 @@ public class GithubService {
                 log.info("Repositories fetched: {}", githubRepositories);
             } else if (githubRepositories == null || githubRepositories.isEmpty()) {
                 log.warn("User" + userLogin + "doesn't have any repositories");
-                return Collections.emptyList();
+                throw new GithubUserNotFound("User" + userLogin + "doesn't have any repositories");
             }
 
             return githubRepositories.stream()
+                    .filter(repo -> !repo.isFork())
                     .map(GithubRepository::getName)
                     .collect(Collectors.toList());
         } catch (WebClientResponseException e) {
@@ -73,7 +76,7 @@ public class GithubService {
         }
     }
 
-    public List<String> branchesListByRepoAndUserWithLastSha(String userLogin, String nameOfRepo) {
+    public List<String> branchesListByRepoAndUserWithLastSha(String userLogin, String nameOfRepo) throws GithubUserNotFound {
         String url = "/repos/{user}/{repo}/branches";
         try {
             List<GithubBranch> githubBranches = webClient
@@ -88,7 +91,7 @@ public class GithubService {
 
             if (githubBranches == null || githubBranches.isEmpty()) {
                 log.warn("Repository {} - {} doesn't have any branches", nameOfRepo, userLogin);
-                return Collections.emptyList();
+                throw new GithubRepoNotFound("Repo" + nameOfRepo + "doesn't exist");
             }
 
             log.info("Branches for repository {} - {} fetched: {}", nameOfRepo, userLogin, githubBranches);
@@ -98,6 +101,7 @@ public class GithubService {
         } catch (WebClientResponseException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 log.info("User {} or repository {} doesn't exist", userLogin, nameOfRepo);
+                throw new GithubUserNotFound("User '" + userLogin + "' or repository '" + nameOfRepo + "' does not exist");
             } else {
                 log.error("Error fetching branches: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             }

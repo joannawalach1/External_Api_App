@@ -1,7 +1,9 @@
 package com.atipera.githubApi.controller;
 
+import com.atipera.githubApi.exception.GithubUserNotFound;
 import com.atipera.githubApi.service.GithubService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/github")
+@Validated
 public class GithubController {
 
     private final GithubService githubService;
@@ -25,7 +28,7 @@ public class GithubController {
 }
 
     @GetMapping("repos/{userLogin}/{nameOfRepo}/branches")
-    public List<String> printBranchesNames(@PathVariable String userLogin, @PathVariable String nameOfRepo) {
+    public List<String> printBranchesNames(@PathVariable String userLogin, @PathVariable String nameOfRepo) throws GithubUserNotFound {
         return githubService.printBranchesNamesByUserAndRepo(userLogin, nameOfRepo);
     }
 }
