@@ -1,24 +1,29 @@
 package com.atipera.githubApi.service;
 
+import com.atipera.githubApi.domain.BranchResponse;
 import com.atipera.githubApi.domain.GithubBranch;
 import com.atipera.githubApi.domain.GithubRepository;
-import com.atipera.githubApi.exception.GithubRepoNotFound;
-import com.atipera.githubApi.exception.GithubUserNotFound;
+import com.atipera.githubApi.domain.RepositoryResponse;
+import com.atipera.githubApi.exception.MissingUserException;
+import com.atipera.githubApi.exception.NoRepositoriesFound;
+import com.atipera.githubApi.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class GithubService {
     private static final Logger log = LoggerFactory.getLogger(GithubService.class);
+    private final String personalAccessToken = "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";
 
     private final WebClient webClient;
 
@@ -27,88 +32,70 @@ public class GithubService {
         this.webClient = webClientBuilder.build();
     }
 
-    public List<String> printRepositoryNamesByUser(String userLogin) {
-        List<String> repositoryNames = repositoryList(userLogin);
-        repositoryNames.forEach(name -> log.info("Repository Name: {}", name));
-        return repositoryNames;
-    }
-
-    public List<String> printBranchesNamesByUserAndRepo(String userLogin, String nameOfRepo) throws GithubUserNotFound {
-        List<String> branchesNames = branchesListByRepoAndUserWithLastSha(userLogin, nameOfRepo);
-        branchesNames.forEach(name -> log.info("Branch Name: {}", name));
-        return branchesNames;
-    }
-
-
-    public List<String> repositoryList(String userLogin) {
+    public List<RepositoryResponse> printRepositoryNamesByUser(String userLogin) throws NotFoundException {
         String url = "/users/{user}/repos";
-        try {
-            List<GithubRepository> githubRepositories =
-                    webClient
-                            .get()
-                            .uri(uriBuilder -> uriBuilder.path(url).build(userLogin))
-                            .retrieve()
-                            .bodyToFlux(GithubRepository.class)
-                            .doOnNext(repo -> log.info("Fetched repository: {}", repo))
-                            .collectList()
-                            .block();
-            if (githubRepositories != null) {
-                log.info("Repositories fetched: {}", githubRepositories);
-            } else if (githubRepositories == null || githubRepositories.isEmpty()) {
-                log.warn("User" + userLogin + "doesn't have any repositories");
-                throw new GithubUserNotFound("User" + userLogin + "doesn't have any repositories");
-            }
-
-            return githubRepositories.stream()
-                    .filter(repo -> !repo.isFork())
-                    .map(GithubRepository::getName)
-                    .collect(Collectors.toList());
-        } catch (WebClientResponseException e) {
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                log.info("Użytkownik " + userLogin + "doesn't exist");
-            } else {
-                log.info("Error" + e.getStatusCode() + e.getResponseBodyAsString());
-            }
-            return Collections.emptyList();
-        } catch (Exception e) {
-            log.info("The other error:" + e.getMessage());
-            return Collections.emptyList();
+        List<RepositoryResponse> repositoryResponses = new ArrayList<>();
+        if (userLogin == null || userLogin.trim().isEmpty()) {
+            throw new MissingUserException("User login must be provided");
         }
-    }
-
-    public List<String> branchesListByRepoAndUserWithLastSha(String userLogin, String nameOfRepo) throws GithubUserNotFound {
-        String url = "/repos/{user}/{repo}/branches";
         try {
-            List<GithubBranch> githubBranches = webClient
-                    .get()
-                    .uri(uriBuilder -> uriBuilder.path(url).build(userLogin, nameOfRepo))
+            List<GithubRepository> githubRepositories = webClient.get()
+                    .uri(uriBuilder -> uriBuilder.path(url).build(userLogin))
+                    .header(HttpHeaders.AUTHORIZATION, "token " + personalAccessToken)
                     .retrieve()
-                    .bodyToFlux(GithubBranch.class)
-                    .doOnNext(branch -> log.info("Fetched branch: {} for repo: {}, user: {}, last commit SHA: {}",
-                            branch.getName(), nameOfRepo, userLogin, branch.getCommit() != null ? branch.getCommit().getSha() : "null"))
+                    .bodyToFlux(GithubRepository.class)
                     .collectList()
                     .block();
 
-            if (githubBranches == null || githubBranches.isEmpty()) {
-                log.warn("Repository {} - {} doesn't have any branches", nameOfRepo, userLogin);
-                throw new GithubRepoNotFound("Repo" + nameOfRepo + "doesn't exist");
+            if (githubRepositories.isEmpty()) {
+                throw new NotFoundException("User '" + userLogin + "' does not exist");
             }
+            if (githubRepositories == null) {
+                throw new NoRepositoriesFound("User '" + userLogin + "' has no repositories");
+            }
+            for (GithubRepository repo : githubRepositories) {
+                if (!repo.isFork()) {
+                    String repoName = repo.getName();
+                    List<BranchResponse> branches = printBranchesNamesByUserAndRepo(userLogin, repoName);
+                    RepositoryResponse repoResponse = new RepositoryResponse();
+                    repoResponse.setRepositoryName(repoName);
+                    repoResponse.setOwnerLogin(userLogin);
+                    repoResponse.setBranches(branches);
+                    repositoryResponses.add(repoResponse);
+                }
+            }
+        } catch (WebClientResponseException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new NotFoundException("User '" + userLogin + "' does not exist");
+            }
+            throw e;
+        }
+        return repositoryResponses;
+    }
 
-            log.info("Branches for repository {} - {} fetched: {}", nameOfRepo, userLogin, githubBranches);
+    public List<BranchResponse> printBranchesNamesByUserAndRepo(String userLogin, String nameOfRepo) throws NotFoundException {
+        String url = "/repos/{user}/{repo}/branches";
+        try {
+            List<GithubBranch> githubBranches = webClient.get()
+                            .uri(uriBuilder -> uriBuilder.path(url).build(userLogin, nameOfRepo))
+                            .header(HttpHeaders.AUTHORIZATION, "token " + personalAccessToken)
+                            .retrieve()
+                            .bodyToFlux(GithubBranch.class)
+                            .collectList()
+                            .block();
             return githubBranches.stream()
-                    .map(branch -> "Branch: " + branch.getName() + ", Last Commit SHA: " + (branch.getCommit() != null ? branch.getCommit().getSha() : "null"))
+                    .map(branch -> {
+                        BranchResponse branchResponse = new BranchResponse();
+                        branchResponse.setBranchName(branch.getName());
+                        branchResponse.setLastCommitSha(branch.getCommit().getSha());
+                        return branchResponse;
+                    })
                     .collect(Collectors.toList());
         } catch (WebClientResponseException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                log.info("User {} or repository {} doesn't exist", userLogin, nameOfRepo);
-                throw new GithubUserNotFound("User '" + userLogin + "' or repository '" + nameOfRepo + "' does not exist");
-            } else {
-                log.error("Error fetching branches: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+                throw new NotFoundException("User '" + userLogin + "' or repository '" + nameOfRepo + "' does not exist");
             }
-            return Collections.emptyList();
-        } catch (Exception e) {
-            log.error("Other error occurred: {}", e.getMessage());
-            return Collections.emptyList();
+            throw e;
         }
     }
 }
