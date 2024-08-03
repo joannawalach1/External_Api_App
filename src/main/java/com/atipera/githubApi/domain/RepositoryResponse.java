@@ -10,11 +10,4 @@ public class RepositoryResponse {
     private String repositoryName;
     private String ownerLogin;
     private List<BranchResponse> branches;
-
-    @Getter
-    @Setter
-    public static class ErrorResponse {
-        private int status;
-        private String message;
-    }
 }
