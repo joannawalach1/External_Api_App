@@ -1,36 +1,37 @@
-#Projekt GitHub API
-Ten projekt to aplikacja Java Spring Boot, która współdziała z API GitHub. Umożliwia pobieranie repozytoriów użytkownika oraz szczegółów gałęzi za pomocą WebClient do asynchronicznych żądań HTTP.
+# GitHub API Integration Project
 
-##Funkcje
--Pobiera repozytoria dla danego użytkownika GitHub.
--Wyświetla gałęzie dla określonego repozytorium.
--Obsługuje niestandardowe błędy i formatowanie odpowiedzi.
+## Opis projektu
 
-##Wymagania
-Java 21 lub wyższa
-Maven
-Docker (opcjonalnie, do konteneryzacji)
-Konfiguracja
-Klonowanie Repozytorium
+Ten projekt to aplikacja Spring Boot, która integruje się z API GitHub w celu pobierania informacji o gałęziach danego repozytorium. Użytkownik podaje nazwę użytkownika GitHub oraz nazwę repozytorium, a aplikacja zwraca listę gałęzi wraz z ostatnim commit SHA.
 
-Wykonaj poniższe polecenia, aby sklonować repozytorium i przejść do katalogu projektu:
+## Wymagania
 
-bash
-Skopiuj kod
-git clone https://github.com/yourusername/your-repo.git
-cd your-repo
-Budowanie Projektu
+- Java 17+
+- Maven 3.8+
+- Konto na GitHub z wygenerowanym tokenem dostępu
 
-Upewnij się, że masz zainstalowany Maven. Zbuduj projekt za pomocą Maven:
+## Konfiguracja
 
-go
-Skopiuj kod
-mvn clean package
-To polecenie skompiluje kod i spakuje go do pliku JAR znajdującego się w katalogu target.
+### 1. Generowanie tokenu dostępu na GitHub
 
-Uruchamianie Aplikacji
+Aby aplikacja mogła komunikować się z API GitHub, potrzebny jest token dostępu:
 
-Po zbudowaniu projektu możesz uruchomić aplikację za pomocą:
+1. Zaloguj się na GitHub.
+2. Przejdź do [Personal Access Tokens](https://github.com/settings/tokens).
+3. Kliknij **Generate new token**.
+4. Wybierz odpowiednie uprawnienia (np. `repo`).
+5. Skopiuj wygenerowany token.
+
+### 2. Ustawienie tokenu w aplikacji
+
+Token dostępu GitHub może być przekazany do aplikacji na kilka sposobów. Zaleca się użycie zmiennych środowiskowych lub konfiguracji w pliku `application.properties`.
+
+#### Przykład ustawienia zmiennej środowiskowej:
+
+Na systemach Unix/Linux/MacOS:
+
+```bash
+export GITHUB_TOKEN=your_github_access_token_here
 
 bash
 Skopiuj kod
