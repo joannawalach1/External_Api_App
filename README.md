@@ -26,21 +26,21 @@ Wykonaj poniższe polecenia, aby sklonować repozytorium i przejść do katalogu
 git clone https://github.com/yourusername/your-repo.git
 cd your-repo
 ```
-###Budowanie Projektu
+### Budowanie Projektu
 Upewnij się, że masz zainstalowany Maven. Zbuduj projekt za pomocą Maven:
 ```bash
 mvn clean package
 ```
 To polecenie skompiluje kod i spakuje go do pliku JAR znajdującego się w katalogu target.
 
-###Uruchamianie Aplikacji
+### Uruchamianie Aplikacji
 Po zbudowaniu projektu możesz uruchomić aplikację za pomocą:
 ```bash
 java -jar target/github-api-0.0.1-SNAPSHOT.jar
 ```
 Upewnij się, że plik target/github-api-0.0.1-SNAPSHOT.jar istnieje przed uruchomieniem tego polecenia.
 
-###Konfiguracja Tokenu GitHub
+### Konfiguracja Tokenu GitHub
 Token dostępu do GitHub jest ustawiony w pliku konfiguracyjnym application.properties lub application.yml. Upewnij się, że plik konfiguracyjny zawiera odpowiednią wartość tokenu.
 Przykład application.properties:
 ```bash
@@ -62,7 +62,7 @@ W systemie Windows (PowerShell):
 $env:GITHUB_TOKEN="your_github_token"
 ```
 
-###Konfiguracja Docker (Opcjonalnie)
+### Konfiguracja Docker (Opcjonalnie)
 Aby uruchomić aplikację w kontenerze Docker, upewnij się, że Docker jest zainstalowany i zbuduj obraz Dockera:
 ```bash
 docker build -t github-api-app .
@@ -73,25 +73,25 @@ docker run -e GITHUB_TOKEN=your_github_token -p 8080:8080 github-api-app
 ```
 Zamień your_github_token na rzeczywisty token GitHub.
 
-##Endpointy
-###Lista Repozytoriów Użytkownika
+## Endpointy
+### Lista Repozytoriów Użytkownika
 ```http
 GET /api/github/users/{userLogin}/repos
 ```
 Pobiera wszystkie repozytoria dla określonego użytkownika GitHub.
 
-###Lista Gałęzi Repozytorium
+### Lista Gałęzi Repozytorium
 ```http
 GET /api/github/repos/{userLogin}/{nameOfRepo}/branches
 ```
 Pobiera wszystkie gałęzie dla określonego repozytorium użytkownika GitHub.
 
-##Obsługa Błędów
+## Obsługa Błędów
 Aplikacja zapewnia odpowiedzi błędów:
 
 404 Not Found: Gdy użytkownik lub repozytorium nie istnieje.
 400 Bad Request: Gdy wymagane parametry są brakujące lub nieprawidłowe.
 
-Kontakt
+### Kontakt
 W przypadku pytań lub opinii proszę o kontakt na adres e-mail: joanna.walach@op.pl
 
