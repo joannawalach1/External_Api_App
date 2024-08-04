@@ -62,4 +62,36 @@ W systemie Windows (PowerShell):
 $env:GITHUB_TOKEN="your_github_token"
 ```
 
+###Konfiguracja Docker (Opcjonalnie)
+Aby uruchomić aplikację w kontenerze Docker, upewnij się, że Docker jest zainstalowany i zbuduj obraz Dockera:
+```bash
+docker build -t github-api-app .
+```
+###Uruchom kontener Docker:
+```bash
+docker run -e GITHUB_TOKEN=your_github_token -p 8080:8080 github-api-app
+```
+Zamień your_github_token na rzeczywisty token GitHub.
+
+##Endpointy
+###Lista Repozytoriów Użytkownika
+```http
+GET /api/github/users/{userLogin}/repos
+```
+Pobiera wszystkie repozytoria dla określonego użytkownika GitHub.
+
+###Lista Gałęzi Repozytorium
+```http
+GET /api/github/repos/{userLogin}/{nameOfRepo}/branches
+```
+Pobiera wszystkie gałęzie dla określonego repozytorium użytkownika GitHub.
+
+##Obsługa Błędów
+Aplikacja zapewnia odpowiedzi błędów:
+
+404 Not Found: Gdy użytkownik lub repozytorium nie istnieje.
+400 Bad Request: Gdy wymagane parametry są brakujące lub nieprawidłowe.
+
+Kontakt
+W przypadku pytań lub opinii proszę o kontakt na adres e-mail: joanna.walach@op.pl
 
